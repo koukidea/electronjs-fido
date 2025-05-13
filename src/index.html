@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Giriş / Kayıt</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div id="connectMessage" style="text-align: center; font-size: 1.1rem; color: var(--text)" class="hidden">Lütfen kartı takınız.</div>
+
+        <div class="form-wrapper hidden">
+            <div class="tabs">
+                <div class="tab active" id="tab-login">Giriş Yap</div>
+                <div class="tab" id="tab-register">Kayıt Ol</div>
+                <div class="tab-indicator"></div>
+            </div>
+            <div class="form-container">
+                <div class="forms-wrapper">
+                    <!-- LOGIN FORM -->
+                    <form id="form-login">
+                        <div class="form-group">
+                            <input type="text" id="login-username" placeholder="Kullanıcı Adı" />
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="login-password" placeholder="Şifre" />
+                        </div>
+                        <button type="submit" class="button" id="login-btn" disabled>Giriş Yap</button>
+                    </form>
+                    <!-- REGISTER FORM -->
+                    <form id="form-register">
+                        <div class="form-group">
+                            <input type="text" id="register-username" placeholder="Kullanıcı Adı" />
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="register-password" placeholder="Şifre" />
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="register-confirm" placeholder="Şifre (Tekrar)" />
+                        </div>
+                        <button type="submit" class="button" id="register-btn" disabled>Kayıt Ol</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script src="renderer.js"></script>
+    </body>
+</html>
