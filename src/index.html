@@ -21,9 +21,6 @@
                         <div class="form-group">
                             <input type="text" id="login-username" placeholder="Kullanıcı Adı" />
                         </div>
-                        <div class="form-group">
-                            <input type="password" id="login-password" placeholder="Şifre" />
-                        </div>
                         <button type="submit" class="button" id="login-btn" disabled>Giriş Yap</button>
                     </form>
                     <!-- REGISTER FORM -->
@@ -31,11 +28,17 @@
                         <div class="form-group">
                             <input type="text" id="register-username" placeholder="Kullanıcı Adı" />
                         </div>
-                        <div class="form-group">
-                            <input type="password" id="register-password" placeholder="Şifre" />
-                        </div>
-                        <div class="form-group">
-                            <input type="password" id="register-confirm" placeholder="Şifre (Tekrar)" />
+                        <div class="checkbox-group">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="alg1" name="algorithm" />
+                                <span class="checkbox-custom"></span>
+                                1. Algoritma
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="alg2" name="algorithm" />
+                                <span class="checkbox-custom"></span>
+                                2. Algoritma
+                            </label>
                         </div>
                         <button type="submit" class="button" id="register-btn" disabled>Kayıt Ol</button>
                     </form>

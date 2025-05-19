@@ -97,7 +97,7 @@ form {
     padding-bottom: 1rem;
 }
 
-/* Input’lar */
+/* Input'lar */
 .form-group {
     margin-bottom: 1rem;
 }
@@ -270,4 +270,60 @@ input.error {
     to {
         box-shadow: inset 0 0 0 40px var(--error);
     }
+}
+
+/* Checkbox Stilleri */
+.checkbox-group {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.checkbox-wrapper input[type='checkbox'] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.checkbox-wrapper .checkbox-custom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    margin-right: 8px;
+    position: relative;
+    transition: all 0.2s ease;
+    background: var(--input-bg);
+}
+
+.checkbox-wrapper input[type='checkbox']:checked + .checkbox-custom {
+    background: var(--accent);
+}
+
+.checkbox-wrapper .checkbox-custom:after {
+    content: '';
+    position: absolute;
+    display: none;
+    left: 6px;
+    top: 2px;
+    width: 4px;
+    height: 10px;
+    border: solid #0f2027;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-wrapper input[type='checkbox']:checked + .checkbox-custom:after {
+    display: block;
+}
+
+.checkbox-wrapper:hover .checkbox-custom {
+    border-color: var(--accent);
+    filter: brightness(1.2);
 }

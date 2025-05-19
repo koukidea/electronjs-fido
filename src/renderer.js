@@ -1,6 +1,7 @@
 window.addEventListener('DOMContentLoaded', () => {
     const SLIDE_GAP = 24;
     let currentTab = 0;
+    let isProcessing = false; // İşlem durumunu takip etmek için
     const tabs = document.querySelectorAll('.tab');
     const indicator = document.querySelector('.tab-indicator');
     const container = document.querySelector('.form-container');
@@ -9,11 +10,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Form elemanları
     const loginUser = document.getElementById('login-username');
-    const loginPass = document.getElementById('login-password');
     const loginBtn = document.getElementById('login-btn');
     const regUser = document.getElementById('register-username');
-    const regPass1 = document.getElementById('register-password');
-    const regPass2 = document.getElementById('register-confirm');
+    const alg1 = document.getElementById('alg1');
+    const alg2 = document.getElementById('alg2');
     const regBtn = document.getElementById('register-btn');
 
     // Yatay slide ve yükseklik ayarı
@@ -54,13 +54,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function activate(i) {
-        currentTab = i; // pencere boyutlanınca lazım
+        if (isProcessing) return; // İşlem devam ediyorsa tab değişimine izin verme
+        currentTab = i;
         tabs.forEach((t) => t.classList.remove('active'));
         tabs[i].classList.add('active');
         indicator.style.left = `${i * 50}%`;
 
-        //  Kaydırma mesafesi  =  -(sekmeNo) × (formGenişliği + GAP)
-        const slideWidth = container.clientWidth; // anlık genişlik
+        const slideWidth = container.clientWidth;
         const offset = -i * (slideWidth + SLIDE_GAP);
         wrapper.style.transform = `translateX(${offset}px)`;
     }
@@ -71,20 +71,25 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Form geçerlilik kontrolleri
     function checkLoginValid() {
-        loginBtn.disabled = !(loginUser.value.trim() && loginPass.value.trim());
+        loginBtn.disabled = loginUser.value.trim() === '';
     }
     loginUser.addEventListener('input', checkLoginValid);
-    loginPass.addEventListener('input', checkLoginValid);
 
     function checkRegisterValid() {
-        const filled = regUser.value.trim() && regPass1.value.trim() && regPass2.value.trim();
-        const match = regPass1.value === regPass2.value;
-        if (regPass2.value) regPass2.classList.toggle('error', !match);
-        regBtn.disabled = !(filled && match);
+        const nameOk = regUser.value.trim() !== '';
+        // Algoritmalar mutual-exclusive: tam olarak bir tanesi seçili olmalı
+        const algOk = (alg1.checked && !alg2.checked) || (alg2.checked && !alg1.checked);
+        regBtn.disabled = !(nameOk && algOk);
     }
     regUser.addEventListener('input', checkRegisterValid);
-    regPass1.addEventListener('input', checkRegisterValid);
-    regPass2.addEventListener('input', checkRegisterValid);
+    alg1.addEventListener('change', () => {
+        if (alg1.checked) alg2.checked = false;
+        checkRegisterValid();
+    });
+    alg2.addEventListener('change', () => {
+        if (alg2.checked) alg1.checked = false;
+        checkRegisterValid();
+    });
 
     function fakeAuth(type) {
         return new Promise((res) => {
@@ -95,7 +100,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Feedback ikonunu gösterme helper’ı
+    // Feedback ikonunu gösterme helper'ı
     function showFeedbackIcon(svgMarkup, callback) {
         const overlay = document.createElement('div');
         overlay.className = 'feedback-overlay';
@@ -191,10 +196,18 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     //<svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
-    loginForm.addEventListener('submit', async (e) => {
+    regForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        loginBtn.disabled = true;
-        const payload = `LOGIN:${loginUser.value}:${loginPass.value}`;
+        isProcessing = true; // İşlem başladı
+
+        // Tüm form elemanlarını devre dışı bırak
+        regBtn.disabled = true;
+        regUser.disabled = true;
+        alg1.disabled = true;
+        alg2.disabled = true;
+
+        const algorithm = alg1.checked ? '1' : '2';
+        const payload = `REGISTER:${regUser.value}:${algorithm}`;
         let success;
         try {
             success = await window.card.request(payload);
@@ -202,19 +215,38 @@ window.addEventListener('DOMContentLoaded', () => {
             console.error('Kart iletişim hatası:', err);
             success = false;
         }
+
+        // İşlem başarısız olursa form elemanlarını tekrar aktif et
+        if (!success) {
+            regUser.disabled = false;
+            alg1.disabled = false;
+            alg2.disabled = false;
+            regBtn.disabled = false;
+            isProcessing = false; // İşlem bitti
+        }
         showFeedback(success);
     });
 
-    regForm.addEventListener('submit', async (e) => {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        regBtn.disabled = true;
-        const payload = `REGISTER:${regUser.value}:${regPass1.value}`;
+        isProcessing = true; // İşlem başladı
+
+        loginBtn.disabled = true;
+        loginUser.disabled = true;
+
+        const payload = `LOGIN:${loginUser.value}`;
         let success;
         try {
             success = await window.card.request(payload);
         } catch (err) {
             console.error('Kart iletişim hatası:', err);
             success = false;
+        }
+
+        if (!success) {
+            loginUser.disabled = false;
+            loginBtn.disabled = false;
+            isProcessing = false; // İşlem bitti
         }
         showFeedback(success);
     });
