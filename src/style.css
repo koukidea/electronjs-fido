@@ -163,9 +163,7 @@ input.error {
     border-color: transparent !important;
 }
 
-.fade-out-form .toggle-option:first-child::after {
-    opacity: 0;
-}
+
 .fade-in-form {
     animation: fadeInForm 0.4s forwards;
 }
@@ -283,25 +281,54 @@ input.error {
 /* Algorithm Toggle Switch */
 .algorithm-toggle {
     display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.5);
     border-radius: 8px;
-    overflow: hidden;
     background: transparent;
+    position: relative;
+    height: 50px;
+    overflow: hidden;
 }
+
+.toggle-outline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.animated-stroke {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.animated-stroke-2 {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Sağ tarafa geçiş CSS ile değil JS ile yönetiliyor */
 
 .toggle-option {
     flex: 1;
-    padding: 0.75rem;
+    padding: 0.65rem;
     text-align: center;
     cursor: pointer;
     color: rgba(255, 255, 255, 0.5);
     background: transparent;
-    transition: all 0.3s ease;
+    transition: color 0.3s ease;
     font-weight: 500;
     font-size: 0.85rem;
-    border: 1px solid transparent;
     position: relative;
+    z-index: 2;
+    border: none;
+    line-height: 1;
 }
 
 .toggle-option:first-child {
@@ -309,34 +336,14 @@ input.error {
     position: relative;
 }
 
-.toggle-option:first-child::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1px;
-    height: 60%;
-    background: rgba(255, 255, 255, 0.5);
-}
+
 
 .toggle-option:last-child {
-    border-left: none;
     border-radius: 0 7px 7px 0;
 }
 
 .toggle-option.active {
     color: var(--accent);
-}
-
-.toggle-option:first-child.active {
-    border-color: var(--accent);
-    border-right-color: transparent;
-}
-
-.toggle-option:last-child.active {
-    border-color: var(--accent);
-    border-left-color: rgba(255, 255, 255, 0.5);
 }
 
 .toggle-option:hover {

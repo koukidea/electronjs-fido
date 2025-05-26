@@ -83,12 +83,123 @@ window.addEventListener('DOMContentLoaded', () => {
     regUser.addEventListener('input', checkRegisterValid);
     
     // Toggle switch event listeners
+    const algorithmToggle = document.querySelector('.algorithm-toggle');
+    const animatedStroke = document.querySelector('.animated-stroke');
+    const animatedStroke2 = document.querySelector('.animated-stroke-2');
+    
+    // Sol ve Sağ yarım path tanımları (dış çerçeveyi takip eden)
+    // ViewBox 200x50, stroke-width=1.5
+    // Sol yarı: U şeklinde tek sürekli path - sol üst köşeden başlayıp sol yarımın çerçevesini çizer
+    const pathLeft = "M100 1 L8 1 A7 7 0 0 0 1 8 L1 42 A7 7 0 0 0 8 49 L100 49";
+    // Sağ yarı: Sağ üst köşeden başlar, sağ kenarı, sağ alt köşeyi ve alt kenarın yarısını çizer.
+    const pathRight = "M100 1 L192 1 A7 7 0 0 1 199 8 L199 42 A7 7 0 0 1 192 49 L100 49";
+    
+    // Sağdan sola geçiş için alternatif path'ler (aşağıdan geçen)
+    // Sol yarı: aşağıdan başlayıp yukarı çıkan
+    const pathLeftFromBottom = "M100 49 L8 49 A7 7 0 0 1 1 42 L1 8 A7 7 0 0 1 8 1 L100 1";
+    // Sağ yarı: aşağıdan başlayıp yukarı çıkan  
+    const pathRightFromBottom = "M100 49 L192 49 A7 7 0 0 0 199 42 L199 8 A7 7 0 0 0 192 1 L100 1";
+
+    // İki path elementini başlat
+    animatedStroke.setAttribute('d', pathLeft);
+    animatedStroke2.setAttribute('d', pathRight);
+    
+    let leftPathLength = animatedStroke.getTotalLength();
+    let rightPathLength = animatedStroke2.getTotalLength();
+    
+    // Sol path başlangıçta görünür, sağ path gizli
+    animatedStroke.style.strokeDasharray = leftPathLength + ' ' + leftPathLength;
+    animatedStroke.style.strokeDashoffset = '0';
+    animatedStroke2.style.strokeDasharray = rightPathLength + ' ' + rightPathLength;
+    animatedStroke2.style.strokeDashoffset = String(rightPathLength);
+
+    let isAnimating = false;
+    const animationDuration = 500; // CSS transition süresiyle eşleşmeli
+
+    function switchToLeft() {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        // Sağdan sola geçiş: aşağıdan geçen path'leri kullan
+        // Önce path'leri değiştir
+        animatedStroke.setAttribute('d', pathLeftFromBottom);
+        animatedStroke2.setAttribute('d', pathRightFromBottom);
+        
+        // Yeni uzunlukları hesapla
+        let newLeftLength = animatedStroke.getTotalLength();
+        let newRightLength = animatedStroke2.getTotalLength();
+        
+        // Dash array'leri güncelle
+        animatedStroke.style.strokeDasharray = newLeftLength + ' ' + newLeftLength;
+        animatedStroke2.style.strokeDasharray = newRightLength + ' ' + newRightLength;
+        
+        // Başlangıç pozisyonları: sağ görünür, sol gizli
+        animatedStroke.style.strokeDashoffset = String(newLeftLength);
+        animatedStroke2.style.strokeDashoffset = '0';
+        
+        // Kısa gecikmeyle animasyonu başlat
+        requestAnimationFrame(() => {
+            // Sağ path'i sil, sol path'i çiz (eşzamanlı)
+            animatedStroke2.style.strokeDashoffset = String(newRightLength); // Sağ gizle
+            animatedStroke.style.strokeDashoffset = '0'; // Sol göster
+        });
+
+        setTimeout(() => {
+            // Animasyon bitince normal path'lere geri dön
+            animatedStroke.setAttribute('d', pathLeft);
+            animatedStroke2.setAttribute('d', pathRight);
+            
+            leftPathLength = animatedStroke.getTotalLength();
+            rightPathLength = animatedStroke2.getTotalLength();
+            
+            animatedStroke.style.strokeDasharray = leftPathLength + ' ' + leftPathLength;
+            animatedStroke2.style.strokeDasharray = rightPathLength + ' ' + rightPathLength;
+            animatedStroke.style.strokeDashoffset = '0';
+            animatedStroke2.style.strokeDashoffset = String(rightPathLength);
+            
+            isAnimating = false;
+        }, animationDuration + 50);
+    }
+
+    function switchToRight() {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        // Soldan sağa geçiş: normal path'leri kullan (yukarıdan geçer)
+        // Path'ler zaten doğru, sadece animasyonu başlat
+        requestAnimationFrame(() => {
+            // Sol path'i sil, sağ path'i çiz (eşzamanlı)
+            animatedStroke.style.strokeDashoffset = String(leftPathLength); // Sol gizle
+            animatedStroke2.style.strokeDashoffset = '0'; // Sağ göster
+        });
+
+        setTimeout(() => {
+            isAnimating = false;
+        }, animationDuration + 50);
+    }
+
     toggleOptions.forEach(option => {
         option.addEventListener('click', () => {
-            // Tüm seçenekleri pasif yap
+            if (isAnimating) return;
+            
             toggleOptions.forEach(opt => opt.classList.remove('active'));
-            // Tıklanan seçeneği aktif yap
             option.classList.add('active');
+            
+            const isRight = option.dataset.algorithm === '2';
+
+            if (algorithmToggle.classList.contains('right-selected') === isRight) {
+                 // Zaten doğru tarafta, animasyona gerek yok
+                return;
+            }
+
+            if (isRight) {
+                algorithmToggle.classList.add('right-selected');
+                switchToRight();
+            } else {
+                algorithmToggle.classList.remove('right-selected');
+                switchToLeft();
+            }
+            
             checkRegisterValid();
         });
     });
