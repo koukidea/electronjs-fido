@@ -28,17 +28,9 @@
                         <div class="form-group">
                             <input type="text" id="register-username" placeholder="Kullanıcı Adı" />
                         </div>
-                        <div class="checkbox-group">
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" id="alg1" name="algorithm" />
-                                <span class="checkbox-custom"></span>
-                                1. Algoritma
-                            </label>
-                            <label class="checkbox-wrapper">
-                                <input type="checkbox" id="alg2" name="algorithm" />
-                                <span class="checkbox-custom"></span>
-                                2. Algoritma
-                            </label>
+                        <div class="algorithm-toggle">
+                            <div class="toggle-option active" data-algorithm="1">LMS</div>
+                            <div class="toggle-option" data-algorithm="2">XMSS</div>
                         </div>
                         <button type="submit" class="button" id="register-btn" disabled>Kayıt Ol</button>
                     </form>

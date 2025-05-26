@@ -158,6 +158,14 @@ input.error {
 .fade-out-form {
     animation: fadeOutForm 0.4s forwards;
 }
+
+.fade-out-form .toggle-option {
+    border-color: transparent !important;
+}
+
+.fade-out-form .toggle-option:first-child::after {
+    opacity: 0;
+}
 .fade-in-form {
     animation: fadeInForm 0.4s forwards;
 }
@@ -272,58 +280,65 @@ input.error {
     }
 }
 
-/* Checkbox Stilleri */
-.checkbox-group {
+/* Algorithm Toggle Switch */
+.algorithm-toggle {
     display: flex;
-    gap: 1rem;
     margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    overflow: hidden;
+    background: transparent;
 }
 
-.checkbox-wrapper {
-    display: flex;
-    align-items: center;
+.toggle-option {
+    flex: 1;
+    padding: 0.75rem;
+    text-align: center;
     cursor: pointer;
-}
-
-.checkbox-wrapper input[type='checkbox'] {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.checkbox-wrapper .checkbox-custom {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--accent);
-    border-radius: 4px;
-    margin-right: 8px;
+    color: rgba(255, 255, 255, 0.5);
+    background: transparent;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.85rem;
+    border: 1px solid transparent;
     position: relative;
-    transition: all 0.2s ease;
-    background: var(--input-bg);
 }
 
-.checkbox-wrapper input[type='checkbox']:checked + .checkbox-custom {
-    background: var(--accent);
+.toggle-option:first-child {
+    border-radius: 7px 0 0 7px;
+    position: relative;
 }
 
-.checkbox-wrapper .checkbox-custom:after {
+.toggle-option:first-child::after {
     content: '';
     position: absolute;
-    display: none;
-    left: 6px;
-    top: 2px;
-    width: 4px;
-    height: 10px;
-    border: solid #0f2027;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 60%;
+    background: rgba(255, 255, 255, 0.5);
 }
 
-.checkbox-wrapper input[type='checkbox']:checked + .checkbox-custom:after {
-    display: block;
+.toggle-option:last-child {
+    border-left: none;
+    border-radius: 0 7px 7px 0;
 }
 
-.checkbox-wrapper:hover .checkbox-custom {
+.toggle-option.active {
+    color: var(--accent);
+}
+
+.toggle-option:first-child.active {
     border-color: var(--accent);
-    filter: brightness(1.2);
+    border-right-color: transparent;
+}
+
+.toggle-option:last-child.active {
+    border-color: var(--accent);
+    border-left-color: rgba(255, 255, 255, 0.5);
+}
+
+.toggle-option:hover {
+    color: rgba(255, 255, 255, 0.8);
 }

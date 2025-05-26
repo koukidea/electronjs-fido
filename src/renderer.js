@@ -12,8 +12,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const loginUser = document.getElementById('login-username');
     const loginBtn = document.getElementById('login-btn');
     const regUser = document.getElementById('register-username');
-    const alg1 = document.getElementById('alg1');
-    const alg2 = document.getElementById('alg2');
+    const toggleOptions = document.querySelectorAll('.toggle-option');
     const regBtn = document.getElementById('register-btn');
 
     // Yatay slide ve yükseklik ayarı
@@ -77,18 +76,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function checkRegisterValid() {
         const nameOk = regUser.value.trim() !== '';
-        // Algoritmalar mutual-exclusive: tam olarak bir tanesi seçili olmalı
-        const algOk = (alg1.checked && !alg2.checked) || (alg2.checked && !alg1.checked);
+        // Algoritmalar: bir tanesi seçili olmalı (varsayılan olarak ilki seçili)
+        const algOk = document.querySelector('.toggle-option.active') !== null;
         regBtn.disabled = !(nameOk && algOk);
     }
     regUser.addEventListener('input', checkRegisterValid);
-    alg1.addEventListener('change', () => {
-        if (alg1.checked) alg2.checked = false;
-        checkRegisterValid();
-    });
-    alg2.addEventListener('change', () => {
-        if (alg2.checked) alg1.checked = false;
-        checkRegisterValid();
+    
+    // Toggle switch event listeners
+    toggleOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Tüm seçenekleri pasif yap
+            toggleOptions.forEach(opt => opt.classList.remove('active'));
+            // Tıklanan seçeneği aktif yap
+            option.classList.add('active');
+            checkRegisterValid();
+        });
     });
 
     function fakeAuth(type) {
@@ -203,10 +205,10 @@ window.addEventListener('DOMContentLoaded', () => {
         // Tüm form elemanlarını devre dışı bırak
         regBtn.disabled = true;
         regUser.disabled = true;
-        alg1.disabled = true;
-        alg2.disabled = true;
+        toggleOptions.forEach(opt => opt.style.pointerEvents = 'none');
 
-        const algorithm = alg1.checked ? '1' : '2';
+        const activeOption = document.querySelector('.toggle-option.active');
+        const algorithm = activeOption.dataset.algorithm;
         const payload = `REGISTER:${regUser.value}:${algorithm}`;
         let success;
         try {
@@ -219,8 +221,7 @@ window.addEventListener('DOMContentLoaded', () => {
         // İşlem başarısız olursa form elemanlarını tekrar aktif et
         if (!success) {
             regUser.disabled = false;
-            alg1.disabled = false;
-            alg2.disabled = false;
+            toggleOptions.forEach(opt => opt.style.pointerEvents = 'auto');
             regBtn.disabled = false;
             isProcessing = false; // İşlem bitti
         }
