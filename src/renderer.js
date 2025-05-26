@@ -14,6 +14,14 @@ window.addEventListener('DOMContentLoaded', () => {
     const regUser = document.getElementById('register-username');
     const toggleOptions = document.querySelectorAll('.toggle-option');
     const regBtn = document.getElementById('register-btn');
+    const statusDisplay = document.getElementById('status-display');
+    
+    // Python betiğindeki statik değerler
+    const PY_RP_ID = 'example.com';
+    const PY_RP_NAME = 'Example';
+    // Diğer PY_USER_ sabitleri artık doğrudan kullanılmayacak, kullanıcı girdisinden türetilecek.
+
+    let selectedCoseAlgorithm = -5; // Varsayılan LMS (-5)
 
     // Yatay slide ve yükseklik ayarı
     const loginForm = document.getElementById('form-login');
@@ -70,13 +78,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Form geçerlilik kontrolleri
     function checkLoginValid() {
-        loginBtn.disabled = loginUser.value.trim() === '';
+        loginBtn.disabled = loginUser.value.trim() === ''; 
     }
     loginUser.addEventListener('input', checkLoginValid);
 
     function checkRegisterValid() {
         const nameOk = regUser.value.trim() !== '';
-        // Algoritmalar: bir tanesi seçili olmalı (varsayılan olarak ilki seçili)
         const algOk = document.querySelector('.toggle-option.active') !== null;
         regBtn.disabled = !(nameOk && algOk);
     }
@@ -185,10 +192,11 @@ window.addEventListener('DOMContentLoaded', () => {
             toggleOptions.forEach(opt => opt.classList.remove('active'));
             option.classList.add('active');
             
-            const isRight = option.dataset.algorithm === '2';
+            const isRight = option.dataset.algorithm === '2'; // XMSS
+            selectedCoseAlgorithm = isRight ? -6 : -5; // XMSS: -6, LMS: -5
+            console.log("Selected COSE Algorithm:", selectedCoseAlgorithm);
 
             if (algorithmToggle.classList.contains('right-selected') === isRight) {
-                 // Zaten doğru tarafta, animasyona gerek yok
                 return;
             }
 
@@ -199,7 +207,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 algorithmToggle.classList.remove('right-selected');
                 switchToLeft();
             }
-            
             checkRegisterValid();
         });
     });
@@ -308,58 +315,135 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    //<svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
-    regForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        isProcessing = true; // İşlem başladı
+    function showStatus(message, isError = false) {
+        if (statusDisplay) {
+            statusDisplay.textContent = message;
+            statusDisplay.className = isError ? 'status-error' : 'status-success';
+            // Kısa bir süre sonra mesajı temizle
+            setTimeout(() => {
+                statusDisplay.textContent = '';
+                statusDisplay.className = '';
+            }, isError ? 6000 : 4000);
+        }
+        console.log(isError ? "Error:" : "Success:", message);
+    }
 
-        // Tüm form elemanlarını devre dışı bırak
-        regBtn.disabled = true;
-        regUser.disabled = true;
-        toggleOptions.forEach(opt => opt.style.pointerEvents = 'none');
+    // Helper to generate a random challenge
+    function generateChallenge() {
+        const challengeArray = new Uint8Array(32); // 32 byte challenge
+        window.crypto.getRandomValues(challengeArray);
+        // Base64URL encode
+        return btoa(String.fromCharCode.apply(null, challengeArray))
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, '');
+    }
 
-        const activeOption = document.querySelector('.toggle-option.active');
-        const algorithm = activeOption.dataset.algorithm;
-        const payload = `REGISTER:${regUser.value}:${algorithm}`;
-        let success;
+    // SHA-256 hash helper (async)
+    async function sha256(message) {
+        // encode as UTF-8
+        const msgBuffer = new TextEncoder().encode(message);
+        // hash the message
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        // convert ArrayBuffer to Array
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        // convert bytes to hex string
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
+    }
+
+    loginBtn.addEventListener('click', async () => {
+        if (isProcessing || loginBtn.disabled) return;
+        isProcessing = true;
+        loginBtn.classList.add('processing');
+        tabs.forEach(t => t.style.pointerEvents = 'none');
+        formWrap.classList.add('form-disabled');
+
         try {
-            success = await window.card.request(payload);
-        } catch (err) {
-            console.error('Kart iletişim hatası:', err);
-            success = false;
+            const challenge = generateChallenge();
+            const requestPayload = {
+                operation: 'getAssertion',
+                data: {
+                    rpId: PY_RP_ID, 
+                    challenge: challenge,
+                    type: "webauthn.get",
+                }
+            };
+            console.log("Sending GetAssertion request:", JSON.stringify(requestPayload, null, 2));
+            const result = await window.card.request(requestPayload);
+            console.log('GetAssertion Sonucu (Raw CBOR Decoded):', result);
+            showStatus(`Kimlik doğrulama denemesi yapıldı. Yanıt için konsolu kontrol edin.`);
+        } catch (error) {
+            console.error('GetAssertion Hatası:', error);
+            showStatus(`Kimlik doğrulama hatası: ${error.message}`, true);
+        } finally {
+            isProcessing = false;
+            loginBtn.classList.remove('processing');
+            tabs.forEach(t => t.style.pointerEvents = 'auto');
+            formWrap.classList.remove('form-disabled');
+            checkLoginValid();
         }
-
-        // İşlem başarısız olursa form elemanlarını tekrar aktif et
-        if (!success) {
-            regUser.disabled = false;
-            toggleOptions.forEach(opt => opt.style.pointerEvents = 'auto');
-            regBtn.disabled = false;
-            isProcessing = false; // İşlem bitti
-        }
-        showFeedback(success);
     });
 
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        isProcessing = true; // İşlem başladı
+    regBtn.addEventListener('click', async () => {
+        if (isProcessing || regBtn.disabled) return;
+        isProcessing = true;
+        regBtn.classList.add('processing');
+        tabs.forEach(t => t.style.pointerEvents = 'none');
+        formWrap.classList.add('form-disabled');
 
-        loginBtn.disabled = true;
-        loginUser.disabled = true;
-
-        const payload = `LOGIN:${loginUser.value}`;
-        let success;
         try {
-            success = await window.card.request(payload);
-        } catch (err) {
-            console.error('Kart iletişim hatası:', err);
-            success = false;
-        }
+            const challenge = generateChallenge();
+            const rawUsername = regUser.value.trim();
 
-        if (!success) {
-            loginUser.disabled = false;
-            loginBtn.disabled = false;
-            isProcessing = false; // İşlem bitti
+            if (!rawUsername) {
+                showStatus("Kullanıcı adı boş olamaz!", true);
+                return; // Fonksiyondan erken çık
+            }
+
+            // userId: Kullanıcı adının SHA-256 hash'i (hex string)
+            const userIdHex = await sha256(rawUsername);
+            
+            // userName: Kullanıcıdan alınan ham kullanıcı adı
+            const userName = rawUsername;
+            
+            // userDisplayName: @ varsa öncesi, yoksa tamamı
+            let userDisplayName = rawUsername;
+            const atSignIndex = rawUsername.indexOf('@');
+            if (atSignIndex > 0) {
+                userDisplayName = rawUsername.substring(0, atSignIndex);
+            }
+
+            const requestPayload = {
+                operation: 'makeCredential',
+                data: {
+                    rpId: PY_RP_ID,     // Sabit RP ID
+                    rpName: PY_RP_NAME,   // Sabit RP Adı
+                    userId: userIdHex,         // Kullanıcı adının SHA-256 hash'i (hex string)
+                    userName: userName,          // Kullanıcıdan alınan ham kullanıcı adı
+                    userDisplayName: userDisplayName,  // Türetilmiş display name
+                    challenge: challenge,
+                    type: "webauthn.create",
+                    pubKeyCredParams: [{ type: 'public-key', alg: selectedCoseAlgorithm }], 
+                }
+            };
+            console.log("Sending MakeCredential request:", JSON.stringify(requestPayload, null, 2));
+            const result = await window.card.request(requestPayload);
+            console.log('MakeCredential Sonucu (Raw CBOR Decoded):', result);
+            showStatus(`Kayıt denemesi yapıldı. Yanıt için konsolu kontrol edin.`);
+            
+        } catch (error) {
+            console.error('MakeCredential Hatası:', error);
+            showStatus(`Kayıt hatası: ${error.message}`, true);
+        } finally {
+            
+            if(isProcessing){ // Sadece işlem gerçekten başladıysa false yap
+                isProcessing = false;
+                regBtn.classList.remove('processing');
+                tabs.forEach(t => t.style.pointerEvents = 'auto');
+                formWrap.classList.remove('form-disabled');
+                checkRegisterValid();
+            }
         }
-        showFeedback(success);
     });
 });
